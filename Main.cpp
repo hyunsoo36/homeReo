@@ -8,6 +8,7 @@
 #include <math.h>
 #include <sys/time.h>
 #include <stdlib.h>
+#include <ctime>
 
 #include "CoolingFanControl.hpp"
 #include "wiringPi.h"
@@ -16,25 +17,27 @@
 using namespace std;
 using namespace cv;
 
-#define BLOCK_COUNT_WIDTH   64
-#define BLOCK_COUNT_HEIGHT  48
 #define FRAME_SIZE_WIDTH    640    // max : 2592
 #define FRAME_SIZE_HEIGHT   360    // max : 1944
+#define BLOCK_COUNT_WIDTH   ((int)(FRAME_SIZE_WIDTH/20.0))
+#define BLOCK_COUNT_HEIGHT  ((int)(FRAME_SIZE_HEIGHT/20.0))
 
-#define SHADOW_FRAME_COUNT 10
 
-//#define HS_DEBUG
+#define FPS_DEFAULT 5
+#define SHADOW_FRAME_COUNT (FPS_DEFAULT * 5) 
+#define HS_DEBUG
 
 int isRecording = 0;
 
+void getFileNameFromDate(char *buf, int len);
 
 void *imageProcessingThread(void *arg) 
 {
     raspicam::RaspiCam_Cv Camera;
  
     Camera.set(CV_CAP_PROP_FORMAT, CV_8UC3);
-    Camera.set(CV_CAP_PROP_FRAME_WIDTH, FRAME_SIZE_WIDTH * 2);
-    Camera.set(CV_CAP_PROP_FRAME_HEIGHT, FRAME_SIZE_HEIGHT * 2);
+    Camera.set(CV_CAP_PROP_FRAME_WIDTH, FRAME_SIZE_WIDTH);
+    Camera.set(CV_CAP_PROP_FRAME_HEIGHT, FRAME_SIZE_HEIGHT);
     
  
     if (!Camera.open()) 
@@ -45,15 +48,7 @@ void *imageProcessingThread(void *arg)
 
     cv::VideoWriter outputVideo;
     cv::Size frameSize(FRAME_SIZE_WIDTH, FRAME_SIZE_HEIGHT);
-    double fps = 2;
-
-    outputVideo.open("./output.avi", cv::VideoWriter::fourcc('M','J','P','G'), fps, frameSize, true);
-
-    if (!outputVideo.isOpened())
-    {
-        cout  << "Could not open the output video for write: " << "output.avi" << endl;
-        return NULL;
-    }
+    double fps = FPS_DEFAULT;
     
     Mat frame_prev;
     Mat frame, frame_gray;
@@ -89,11 +84,10 @@ void *imageProcessingThread(void *arg)
 
         Camera.grab();
         Camera.retrieve (frame);
-        resize(frame, frame, cv::Size( FRAME_SIZE_WIDTH, FRAME_SIZE_HEIGHT ));
+        //resize(frame, frame, cv::Size( FRAME_SIZE_WIDTH, FRAME_SIZE_HEIGHT ));
         
 
-        flip(frame, frame, 0);
-        flip(frame, frame, 1);
+        flip(frame, frame, -1);
         cvtColor(frame, frame_gray, CV_RGB2GRAY);
 
         if(isFirst == false) {
@@ -134,7 +128,7 @@ void *imageProcessingThread(void *arg)
             
             flowAverage = flowSum / (BLOCK_COUNT_WIDTH * BLOCK_COUNT_HEIGHT);
             float flowBias = flowAverage * (BLOCK_COUNT_WIDTH * BLOCK_COUNT_HEIGHT);
-            snprintf(printBuf, 100, "sum : %.4f, average : %.4f, min : %.4f, max : %.4f, \n", flowSum, flowAverage, flowMin, flowMax);
+            snprintf(printBuf, 100, "sum : %4.4f, average : %3.4f, min : %3.4f, max : %3.4f, \n", flowSum, flowAverage, flowMin, flowMax);
             
 
 
@@ -156,24 +150,36 @@ void *imageProcessingThread(void *arg)
         frame_prev = frame_gray.clone();
 
 
-#if 1
-        char fpsStr[10];
-        snprintf(fpsStr, 10, "%3.2f fps", 1000.0 / (float)(timeElapsed + delay));
-        putText(frame, fpsStr, Point(0, 10), 2, 0.3, Scalar(0, 255, 0));
-        putText(frame, printBuf, Point(0, 20), 2, 0.3, Scalar(0, 255, 0));
-        puts(fpsStr);
         if(movingFlag > 0) {
+            char fpsStr[16];
+            snprintf(fpsStr, 16, "%2.2f fps", 1000.0 / (float)(timeElapsed + delay));
+            putText(frame, fpsStr, Point(0, 12), 2, 0.5, Scalar(0, 255, 0));
+            putText(frame, printBuf, Point(0, 24), 2, 0.5, Scalar(0, 255, 0));
+            //printf("%s", fpsStr);
+        
             movingFlag --;
-            circle(frame, Point(FRAME_SIZE_WIDTH-20, 20), 10, Scalar(0, 0, 255), -1);
+            circle(frame, Point(FRAME_SIZE_WIDTH-20, 20), 6, Scalar(0, 0, 255), -1);
+            if(outputVideo.isOpened() == false) {
+                char fileName[64];
+                getFileNameFromDate(fileName, 64);
+                outputVideo.open(fileName, cv::VideoWriter::fourcc('F','M','P','4'), fps, frameSize, true);
+                if(outputVideo.isOpened())  printf("Vedio file is opened. (%s)\n", fileName);
+            }
             outputVideo.write(frame);
+            if(movingFlag == 0) {
+                outputVideo.release();
+            }
         }
+#ifdef HS_DEBUG
         imshow("frame viewer", frame);
 #endif
+
+
         timeEnd = millis();
         timeElapsed = timeEnd - timeStart;
         delay = ((int)(1000.0 / fps) - (int)timeElapsed);
         if(delay <= 0) delay = 1;
-        printf("timeElapsed : %d, delay : %d\n", timeElapsed, delay);
+        //printf("timeElapsed : %d, delay : %d\n", timeElapsed, delay);
         if ( waitKey(delay) == 27 ) break; 
  
     }
@@ -181,6 +187,15 @@ void *imageProcessingThread(void *arg)
  RETURN:
 
     Camera.release();
+}
+
+void getFileNameFromDate(char *buf, int len) {
+    time_t curr_time;
+    struct tm *curr_tm;
+    curr_time = time(NULL);
+    curr_tm = localtime(&curr_time);
+    snprintf(buf, len, "%02d%02d%02d_%02d%02d%02d_homeReo.avi", curr_tm->tm_year-100, curr_tm->tm_mon + 1, curr_tm->tm_mday
+                            , curr_tm->tm_hour, curr_tm->tm_min, curr_tm->tm_sec);
 }
 
 int main ( int argc,char **argv ) 
