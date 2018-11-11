@@ -16,9 +16,11 @@ set(src_files
     ./src/CoolingFanControl.cpp
     )
 
+find_library(wiringPi_LIB wiringPi)
 
 add_compile_options()
 
 add_executable (homeReo Main.cpp ${src_files})  
 
-target_link_libraries (homeReo ${raspicam_CV_LIBS} Threads::Threads)
+target_link_libraries (homeReo ${raspicam_CV_LIBS} ${wiringPi_LIB} Threads::Threads )
+
