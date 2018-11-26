@@ -4,14 +4,16 @@
 #define CPU_TEMPERATURE_FILE_NAME "/sys/class/thermal/thermal_zone0/temp"
 #define MAX_CPU_TEMPERATURE 100.0
 
-CoolingFanControl::CoolingFanControl() {
+CoolingFanControl::CoolingFanControl() 
+{
     temperatureFile = fopen (CPU_TEMPERATURE_FILE_NAME, "r");
     if (temperatureFile == NULL) {
         printf("cannot open file : %s", CPU_TEMPERATURE_FILE_NAME);
     }
 }
 
-CoolingFanControl::~CoolingFanControl() {
+CoolingFanControl::~CoolingFanControl() 
+{
     if (temperatureFile != NULL) {
         fclose (temperatureFile);
     }

@@ -13,6 +13,8 @@ find_package(Threads REQUIRED)
 include_directories (include)
 
 set(src_files
+    ./src/Util.cpp
+    ./src/ImageProcessing.cpp
     ./src/CoolingFanControl.cpp
     )
 

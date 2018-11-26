@@ -1,5 +1,4 @@
-#ifndef _COOLINGFANCONTROL_HPP__
-#define _COOLINGFANCONTROL_HPP__
+#pragma once
 #include <stdio.h>
 
 class CoolingFanControl
@@ -14,4 +13,3 @@ private:
     double cpu_temp;
 };
 
-#endif
