@@ -7,10 +7,10 @@ template <typename T>
 class NumUtil 
 {
 public:
-    static void setMinimum(const T* input, T* originalMin);
-    static void setMaximum(const T* input, T* originalMax);
+    void setMinimum(const T* input, T* originalMin);
+    void setMaximum(const T* input, T* originalMax);
 
 private:
 
 
-}
+};

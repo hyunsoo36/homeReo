@@ -15,18 +15,19 @@ void getFileNameFromDate(char *buf, int len) {
     snprintf(buf, len, "%02d%02d%02d_%02d%02d%02d_homeReo.avi", curr_tm->tm_year-100, curr_tm->tm_mon + 1, curr_tm->tm_mday
                             , curr_tm->tm_hour, curr_tm->tm_min, curr_tm->tm_sec);
 }
-static void NumUtil::setMinimum(const T* input, T* originalMin)
+template <typename T>
+void NumUtil<T>::setMinimum(const T* input, T* originalMin)
 {
     if(*input < *originalMin)
     {
         *originalMin = *input;
     }
 }
-
-static void NumUtil::setMaximum(const T* input, T* originalMax)
+template <typename T>
+void NumUtil<T>::setMaximum(const T* input, T* originalMax)
 {
     if(*input > *originalMax)
     {
-        *originalMin = *input;
+        *originalMax = *input;
     }
 }
