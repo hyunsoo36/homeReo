@@ -10,8 +10,8 @@ public:
     int IntegralMovement(float flowMap[BLOCK_COUNT_WIDTH][BLOCK_COUNT_HEIGHT]);
 
 private:
-    static float integralMap[BLOCK_COUNT_WIDTH][BLOCK_COUNT_HEIGHT];
-    static float integralMax;
-    static float integralMin;
+    float integralMap[BLOCK_COUNT_WIDTH][BLOCK_COUNT_HEIGHT];
+    float integralMax;
+    float integralMin;
 };
 

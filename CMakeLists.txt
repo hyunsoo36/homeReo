@@ -16,6 +16,7 @@ set(src_files
     ./src/Util.cpp
     ./src/ImageProcessing.cpp
     ./src/CoolingFanControl.cpp
+    ./src/CatTracking.cpp
     )
 
 find_library(wiringPi_LIB wiringPi)

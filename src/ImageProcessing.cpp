@@ -7,10 +7,10 @@
 #include <wiringPi.h>
 #include <wiringSerial.h>
 #include "Util.hpp"
+#include "CatTracking.hpp"
+
 using namespace std;
 using namespace cv;
-
-
 
 #define FPS_DEFAULT 5
 #define SHADOW_FRAME_COUNT (FPS_DEFAULT * 10) 
@@ -66,6 +66,7 @@ void* ImageProcessing::imageProcessingThread(void *arg)
     char printBuf[100];
 
     int movingFlag = 0;
+    CatTracking ct;
 
     while(1) 
     {
@@ -75,7 +76,6 @@ void* ImageProcessing::imageProcessingThread(void *arg)
         Camera.retrieve (frame);
         resize(frame, frame, cv::Size( FRAME_SIZE_WIDTH, FRAME_SIZE_HEIGHT ));
         
-
         flip(frame, frame, -1);
         cvtColor(frame, frame_gray, CV_RGB2GRAY);
         //frame_gray = frame;
@@ -121,9 +121,7 @@ void* ImageProcessing::imageProcessingThread(void *arg)
             float flowBias = flowAverage * (BLOCK_COUNT_WIDTH * BLOCK_COUNT_HEIGHT);
             snprintf(printBuf, 100, "sum : %4.4f, average : %3.4f, min : %3.4f, max : %3.4f, \n", flowSum, flowAverage, flowMin, flowMax);
             
-
-
-            
+            ct.IntegralMovement(flowMap);
         }
         else 
         {
@@ -134,7 +132,6 @@ void* ImageProcessing::imageProcessingThread(void *arg)
                         featurePrev.push_back(Point2f( i * w + (w/2), j * h + (h/2) ));
                     }
             }
-            
             
         }
 
